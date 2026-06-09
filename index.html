@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>xeh Language - 公式ダウンロードセンター</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Consolas', 'Courier New', Courier, monospace, "Meiryo", sans-serif;
+            background-color: #f4f5f7;
+            color: #1a1a1a;
+            line-height: 1.6;
+        }
+
+        /* 指定カラーバー：左が紫、右がオレンジ */
+        .gradient-topbar {
+            background: linear-gradient(to right, #8a2be2, #ff8c00);
+            padding: 20px 40px;
+            color: #ffffff;
+            font-size: 22px;
+            font-weight: bold;
+            letter-spacing: 1px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .main-content {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 60px 20px;
+        }
+
+        .hero-section {
+            text-align: center;
+            margin-bottom: 50px;
+        }
+
+        .hero-section h1 {
+            font-size: 40px;
+            margin: 0 0 15px 0;
+            font-weight: bold;
+        }
+
+        .hero-section p {
+            font-size: 16px;
+            color: #5c6370;
+            margin: 0;
+        }
+
+        .download-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 30px;
+            margin-bottom: 60px;
+            justify-content: center;
+        }
+
+        .installer-card {
+            background-color: #ffffff;
+            border-radius: 6px;
+            padding: 40px 25px;
+            text-align: center;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .installer-card.xml-theme { border: 2px solid #8a2be2; }
+        .installer-card.html-theme { border: 2px solid #ff8c00; }
+
+        .installer-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 30px rgba(0,0,0,0.08);
+        }
+
+        .badge {
+            display: inline-block;
+            color: #ffffff;
+            font-size: 11px;
+            font-weight: bold;
+            padding: 5px 12px;
+            border-radius: 3px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .xml-theme .badge { background-color: #8a2be2; }
+        .html-theme .badge { background-color: #ff8c00; }
+
+        .card-title {
+            font-size: 22px;
+            font-weight: bold;
+            margin: 20px 0 8px 0;
+            color: #2c313c;
+        }
+
+        .package-info {
+            font-size: 13px;
+            color: #7c828d;
+            margin-bottom: 30px;
+        }
+
+        .btn-download-link {
+            display: block;
+            width: 100%;
+            color: #ffffff;
+            text-decoration: none;
+            padding: 14px;
+            border-radius: 4px;
+            font-size: 15px;
+            font-weight: bold;
+            box-sizing: border-box;
+            transition: opacity 0.2s;
+        }
+
+        .xml-theme .btn-download-link { background-color: #8a2be2; }
+        .html-theme .btn-download-link { background-color: #ff8c00; }
+        .btn-download-link:hover { opacity: 0.85; }
+
+        .info-section {
+            background-color: #ffffff;
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            padding: 40px;
+            margin-bottom: 40px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.02);
+        }
+
+        .info-section h2 {
+            font-size: 24px;
+            color: #2c313c;
+            margin-top: 0;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #e0e0e0;
+            padding-bottom: 10px;
+        }
+
+        .info-section h3 {
+            font-size: 18px;
+            color: #3e4451;
+            margin-top: 25px;
+            margin-bottom: 10px;
+        }
+
+        .code-block {
+            background-color: #282c34;
+            color: #abb2bf;
+            padding: 20px;
+            border-radius: 4px;
+            overflow-x: auto;
+            font-size: 14px;
+            margin: 15px 0;
+        }
+
+        .file-list {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+
+        .file-list th, .file-list td {
+            text-align: left;
+            padding: 12px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .file-list th {
+            background-color: #f8f9fa;
+            color: #2c313c;
+            font-weight: bold;
+        }
+
+        .file-name {
+            font-weight: bold;
+            color: #8a2be2;
+        }
+
+        .system-specs-line {
+            border-top: 1px solid #dcdfe6;
+            padding-top: 25px;
+            text-align: center;
+            color: #909399;
+            font-size: 13px;
+            letter-spacing: 0.5px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="gradient-topbar">
+        xeh Core Language Project
+    </div>
+
+    <div class="main-content">
+        <div class="hero-section">
+            <h1>xeh言語エンジンを入手</h1>
+            <p>公式リポジトリのバンドルをダウンロードし、XMLベースのマルチランタイムシステムを環境に展開します。</p>
+        </div>
+
+        <div class="download-container">
+            <div class="installer-card xml-theme">
+                <span class="badge">XML Core</span>
+                <div class="card-title">xeh プロジェクトバンドル</div>
+                <div class="package-info">ソース: ://github.com</div>
+                <a href="https://://github.com/archive/refs/heads/main.zip" class="btn-download-link">プロジェクト ZIP をダウンロード</a>
+            </div>
+
+            <div class="installer-card html-theme">
+                <span class="badge">HTML View</span>
+                <div class="card-title">xeh ビューバンドル</div>
+                <div class="package-info">ブランチ: main (ソースファイルを含む)</div>
+                <a href="https://://github.com/archive/refs/heads/main.zip" class="btn-download-link">ビューレンダラー をダウンロード</a>
+            </div>
+        </div>
+
+        <div class="info-section">
+            <h2>サンプルプログラムの概要 (app.xeh)</h2>
+            <p>リポジトリには app.xeh というベンチマークスクリプトが含まれています。このスクリプトは、OSレベルのパイプストリーミングを使用し、単一のスキーマ下で異なるバックエンド環境を管理するという xeh 固有の価値を実証します。</p>
+            
+            <h3>データ管理ブロック</h3>
+            <p>rootタグは、名前、データ型、および静的な値の厳格なマッピングを含む構造化されたJSON配列をインスタンス化します。エンジンはこの空間を main_space という識別子で分離します。</p>
+            <div class="code-block">&lt;root memory_name="main_space"&gt;
+    [{"name": "test1", "type": "string", "value": "test1aaaaa"}]
+&lt;/root&gt;</div>
+
+            <h3>マルチランタイム・オーケストレーション</h3>
+            <p>subframeworkはリクエストをルーティングし、自動化されたPythonサブプロセスを実行します。エンジンは、低レイテンシ処理のために、Goのメモリ空間から構造化されたJSONデータをPythonの標準入力ストリーム（sys.stdin）にパイプラインで自動転送します。</p>
+            <div class="code-block">for line in sys.stdin:
+    packet = json.loads(line.strip())
+    print(f"Value of test1: {packet.get('data').get('test1')}")</div>
+        </div>
+        <!-- 2. 全ファイルの説明セクション -->
+        <div class="info-section">
+            <h2>リポジトリのファイル構造</h2>
+            <p>以下は、xeh言語プロジェクトのリポジトリバンドル内に含まれる主要ファイルの役割一覧です。</p>
+            
+            <table class="file-list">
+                <thead>
+                    <tr>
+                        <th>ファイル / ディレクトリ</th>
+                        <th>種別</th>
+                        <th>機能説明</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td class="file-name">main.go</td>
+                        <td>Go ソース</td>
+                        <td>コアインタプリタエンジンです。XMLのコンパイル、メタデータの検証、サブプロセスの管理、およびリアルタイムなIPCストリームパイプ通信を処理します。</td>
+                    </tr>
+                    <tr>
+                        <td class="file-name">set.json</td>
+                        <td>JSON 設定</td>
+                        <td>中心となるコマンド管理ハブです。独自のXMLタグを外部プラットフォームのバイナリ（Python、Rust、Java、Elixir、C++など）やプロジェクトのメタデータにマッピングします。</td>
+                    </tr>
+                    <tr>
+                        <td class="file-name">app.xeh</td>
+                        <td>xeh ソース</td>
+                        <td>厳格な名前付きメモリ空間と複数言語のスクリプトブロックを含む、デフォルトの実行エントリポイントです。</td>
+                    </tr>
+                    <tr>
+                        <td class="file-name">index.html</td>
+                        <td>HTML 文書</td>
+                        <td>コアアイデンティティのグラデーションバーを採用した、公式のユーザーポータル用資産です。開発者がリポジトリ資産をダウンロードするための案内を提供します。</td>
+                    </tr>
+                    <tr>
+                        <td class="file-name">LICENSE</td>
+                        <td>テキスト 文書</td>
+                        <td>MITライセンスの条項に基づき、オープンソースとしての配布を法的に許諾する明示的なライセンスブロックです。</td>
+                    </tr>
+                    <tr>
+                        <td class="file-name">plugins/</td>
+                        <td>ディレクトリ</td>
+                        <td>コンパイル中に生成される安全な出力スクリプトや、外部ランタイム定義を格納するために隔離されたワークスペースです。</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="system-specs-line">
+            Architecture: xeh v9.9.0 / Charset: UTF-8 / License: MIT
+        </div>
+    </div>
+
+</body>
+</html>
