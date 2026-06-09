@@ -172,6 +172,7 @@ func main() {
 					finalArgs[i] = strings.ReplaceAll(arg, "{src}", engConfig.Src)
 				}
 
+				// Non-blocking asynchronous execution with input stream boundary termination
 				go func() {
 					var cmd *exec.Cmd
 					rawArgs := strings.Join(finalArgs, " ")
@@ -182,14 +183,14 @@ func main() {
 						cmd = exec.Command("sh", "-c", langSet.Command+" "+rawArgs)
 					}
 
+					cmd.Stdout = os.Stdout
+					cmd.Stderr = os.Stderr
+
 					stdinPipe, err := cmd.StdinPipe()
 					if err != nil {
 						log.Printf("[Error] Failed to create stdin pipe for <%s>: %v", tagName, err)
 						return
 					}
-
-					cmd.Stdout = os.Stdout
-					cmd.Stderr = os.Stderr
 
 					if err := cmd.Start(); err != nil {
 						log.Printf("[Error] Failed to start process for <%s>: %v", tagName, err)
@@ -203,6 +204,9 @@ func main() {
 					}
 					packetBytes, _ := json.Marshal(packet)
 					io.WriteString(stdinPipe, string(packetBytes)+"\n")
+					
+					// Close write pipeline explicitly to release subprocess scanner blocks
+					stdinPipe.Close()
 
 					cmd.Wait()
 				}()
@@ -255,7 +259,7 @@ func mergeRootVariables(jsonStr string) {
 	}
 }
 
-func setupSignalHandler() {
+func etupSignalHandler() {
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
 	go func() {
