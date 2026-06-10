@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xeh>
+    <!-- JSON structures defining strict name, type, and value assignments -->
+    <root memory_name="main_space">
+        [
+            {
+                "name": "app_status",
+                "type": "string",
+                "value": "multi-backend-active"
+            },
+            {
+                "name": "test1",
+                "type": "string",
+                "value": "test1aaaaa"
+            },
+            {
+                "name": "counter",
+                "type": "number",
+                "value": 100
+            }
+        ]
+    </root>
+
+    <subframework roteapp="/sub">
+        <!-- Executing unified python script via custom tag mapped in set.json -->
+        <ai-logic>
+import sys
+import json
+
+print("[Python] Pipe memory stream listener activated.")
+
+# Continuous loop waiting for real-time memory packets via standard input
+for line in sys.stdin:
+    try:
+        packet = json.loads(line.strip())
+        
+        space_name = packet.get("memory_name")
+        memory_data = packet.get("data")
+        
+        print(f"[Python] Target Memory Space: '{space_name}'")
+        print(f"Value of test1: {memory_data.get('test1')}")
+        print(f"Value of counter: {memory_data.get('counter')}")
+    except Exception as e:
+        print(f"[Python Error]: {e}")
+        break
+        </ai-logic>
+
+        <!-- Executing native xeh XML logic directly on Go engine -->
+        <xeh-logic>
+            <print value="System Status: ${app_status}" />
+        </xeh-logic>
+    </subframework>
+</xeh>
