@@ -1,5 +1,7 @@
 # xeh-project
 
+![logo](./costume1-_2_.png)
+
 The ultra-flexible XML-based multi-runtime orchestrator programming language. `xeh` allows developers to write and coordinate multiple backend languages (Python, Go, Rust, Ruby, Java, etc.) inside a single unified XML syntax, leveraging the full power of OS-level pipeline communication.
 
 ## Features
