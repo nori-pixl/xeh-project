@@ -2,77 +2,110 @@
 
 ![logo](./costume1-_2_.png)
 
-The ultra-flexible XML-based multi-runtime orchestrator programming language. `xeh` allows developers to write and coordinate multiple backend languages (Python, Go, Rust, Ruby, Java, etc.) inside a single unified XML syntax, leveraging the full power of OS-level pipeline communication.
+超柔軟なXMLベースのマルチランタイムオーケストレータープログラミング言語、`xeh`。開発者は、単一の統一されたXML構文内で、複数のバックエンド言語（Python、Go、Rust、Ruby、Javaなど）を記述し、連携させることができます。OSレベルのパイプライン通信の力を最大限に活用できます。
 
-## Features
+## 機能
 
-- **Unified Multi-Runtime**: Run Python, Go, Rust, and more side-by-side within a single `.xeh` source file.
-- **Dynamic Engine Assignment**: Map customized XML tags to any language execution commands via `set.json`.
-- **Named Memory Space System**: Isolate and manage variable spaces via strict JSON object structures and stream packet passing.
-- **OS-Level Pipe Communication**: Real-time memory streaming directly via standard input/output pipelines.
-- **No Constraints**: 100% freedom over your project structures, language platforms, and runtime configurations.
+- **統一されたマルチランタイム**: 単一の`.xeh`ソースファイル内で、Python、Go、Rustなどを並行して実行できます。
 
-## Architecture
+- **動的エンジン割り当て**: `set.json`を使用して、カスタムXMLタグを任意の言語実行コマンドにマッピングできます。
+
+- **名前付きメモリ空間システム**: 厳密なJSONオブジェクト構造とストリームパケットパッシングにより、変数空間を分離および管理できます。
+
+- **OSレベルのパイプ通信**: 標準入出力パイプラインを介して、リアルタイムのメモリストリーミングを直接実行できます。
+
+- **制約なし**: プロジェクト構造、言語プラットフォーム、ランタイム構成を100%自由に選択できます。
+
+## アーキテクチャ
 
 ```text
-[app.xeh] (XML Source with Named Memory Space)
-    │
-    ▼ (XML Parse / Dynamic Routing)
-[xeh Core Engine] (Go-powered Orchestrator) ── Loaded by ── [set.json]
-    │
-    ├── Pipe Memory Stream (Real-time Packet JSON Passing)
-    ▼
-[Subprocesses] (Python/Flask, Go, Rust, Java, etc. running concurrently)
+[app.xeh] (名前付きメモリ空間を持つXMLソース)
+
+│
+
+▼ (XMLパース/動的ルーティング)
+[xehコアエンジン] (Go言語ベースのオーケストレーター) ── ロード元 ── [set.json]
+
+│
+
+├── パイプメモリストリーム (リアルタイムパケットJSONパッシング)
+
+▼
+[サブプロセス] (Python/Flask、Go、Rust、Javaなど、並行実行可能なプロセス)
 ```
 
-## Getting Started
+## はじめに
 
-### Prerequisites
+### 前提条件
 
-- [Go](https://go.dev) (1.18 or higher)
-- Runtimes you want to use (e.g., Python, Ruby) installed on your system path.
+- [Go](https://go.dev) (バージョン1.18以上)
+- 使用するランタイム (例: Python、Ruby) がシステムパスにインストールされていること。
 
-### Installation & Run
+### インストールと実行
 
-1. Clone the repository:
-   ```bash
-   git clone https://github.com
-   cd xeh-lang
-   ```
+1. リポジトリをクローンします。
 
-2. Run the `xeh` engine using the sample source code:
-   ```bash
-   go run main.go
-   ```
+```bash
 
-3. Check version and license information via CLI options:
-   ```bash
-   go run main.go --version
-   go run main.go --license
-   ```
+git clone https://github.com
 
-## Configuration (`set.json`)
+cd xeh-lang
 
-All configurations, metadata, language commands, and custom engines are unified in `set.json`. You can easily add any backend runtime without modifying the core engine code.
+```
+
+2. サンプルソースコードを使用して`xeh`エンジンを実行します。
+
+```bash
+
+go run main.go
+
+```
+
+3. CLIオプションを使用してバージョンとライセンス情報を確認します。
+
+```bash
+
+go run main.go --version
+
+go run main.go --license
+
+```
+
+## 設定（`set.json`）
+
+すべての設定、メタデータ、言語コマンド、カスタムエンジンは`set.json`に統合されています。コアエンジンコードを変更することなく、任意のバックエンドランタイムを簡単に追加できます。
+
 
 ```json
 {
-  "meta": {
-    "name": "xeh-core-engine",
-    "version": "9.9.0",
-    "license": "MIT",
-    "charset": "UTF-8"
-  },
-  "runtimes": {
-    "py": { "command": "python", "args": ["-u", "{src}"] },
-    "go": { "command": "go", "args": ["run", "{src}"] }
-  },
-  "engines": {
-    "ai-logic": { "type": "py", "src": "plugins/ai_core.py" }
-  }
+"meta": {
+
+"name": "xeh-core-engine",
+
+"version": "9.9.0",
+
+"license": "MIT",
+
+"charset": "UTF-8"
+
+},
+
+"runtimes": {
+
+"py": { "command": "python", "args": ["-u", "{src}"] },
+
+"go": { "command": "go", "args": ["run", "{src}"] }
+
+},
+
+"engines": {
+
+"ai-logic": { "type": "py", "src": "plugins/ai_core.py" }
+
+}
 }
 ```
 
-## License
+## ライセンス
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+このプロジェクトはMITライセンスに基づいてライセンスされています。詳細は[LICENSE](LICENSE)ファイルを参照してください。
