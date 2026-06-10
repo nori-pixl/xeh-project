@@ -11,6 +11,7 @@ import (
 	"os/signal"
 	"path/filepath"
 	"strings"
+	"sync"
 	"syscall"
 )
 
@@ -28,9 +29,9 @@ type SubFramework struct {
 }
 
 type XehApp struct {
-	XMLName       xml.Name `xml:"xeh"`
-	MemoryName    string   `xml:"root>memory_name,attr"`
-	RootVariables string   `xml:"root"`
+	XMLName       xml.Name       `xml:"xeh"`
+	MemoryName    string         `xml:"root>memory_name,attr"`
+	RootVariables string         `xml:"root"`
 	SubFramework  []SubFramework `xml:"subframework"`
 }
 
@@ -73,16 +74,25 @@ type SetConfig struct {
 	Plugins  map[string]PluginSetting  `json:"plugins"`
 }
 
-var activeProcesses []*os.Process
-var sharedStore = make(map[string]interface{})
-var dynamicEngineMap = make(map[string]EngineSetting)
+var (
+	activeProcesses []*os.Process
+	processMu       sync.Mutex // 🔴修正1: Race Condition対策
+
+	sharedStore   = make(map[string]interface{})
+	storeMu       sync.RWMutex // 🔴修正1: sharedStoreの競合対策
+
+	dynamicEngineMap = make(map[string]EngineSetting)
+)
 
 func main() {
 	setFile, err := os.Open("set.json")
 	if err != nil {
 		log.Fatalf("[Error] Failed to open set.json: %v", err)
 	}
-	setBytes, _ := io.ReadAll(setFile)
+	setBytes, err := io.ReadAll(setFile)
+	if err != nil {
+		log.Fatalf("[Error] Failed to read set.json: %v", err) // 🟡修正3: エラー無視をなくす
+	}
 	var setConfig SetConfig
 	if err := json.Unmarshal(setBytes, &setConfig); err != nil {
 		log.Fatalf("[Error] Failed to parse set.json: %v", err)
@@ -104,16 +114,21 @@ func main() {
 		}
 	}
 
-	fmt.Printf("--- %s (Version %s / %s License / %s) ---\n", 
+	fmt.Printf("--- %s (Version %s / %s License / %s) ---\n",
 		setConfig.Meta.Name, setConfig.Meta.Version, setConfig.Meta.License, setConfig.Meta.Charset)
 
 	file, err := os.Open("app.xeh")
 	if err != nil {
 		log.Fatalf("[Error] Failed to open app.xeh: %v", err)
 	}
-	xmlBytes, _ := io.ReadAll(file)
+	xmlBytes, err := io.ReadAll(file)
+	if err != nil {
+		log.Fatalf("[Error] Failed to read app.xeh: %v", err) // 🟡修正3: エラー無視をなくす
+	}
 	var mainApp XehApp
-	xml.Unmarshal(xmlBytes, &mainApp)
+	if err := xml.Unmarshal(xmlBytes, &mainApp); err != nil { // 🟡修正3: エラー無視をなくす
+		log.Fatalf("[Error] Failed to parse app.xeh: %v", err)
+	}
 	file.Close()
 
 	memSpaceName := mainApp.MemoryName
@@ -127,15 +142,19 @@ func main() {
 		if err := json.Unmarshal([]byte(rootJSON), &rawVariables); err != nil {
 			log.Fatalf("[Error] Failed to parse root JSON: %v", err)
 		}
-		
+
 		fmt.Printf("[xeh/os] Allocating memory space: '%s'\n", memSpaceName)
 		for _, v := range rawVariables {
+			storeMu.Lock()
 			sharedStore[v.Name] = v.Value
+			storeMu.Unlock()
 			fmt.Printf("   -> %s = %v\n", v.Name, v.Value)
 		}
 	}
 
-	setupSignalHandler()
+	setupSignalHandler() // 🔴修正2: タイポ修正
+
+	var wg sync.WaitGroup // 🟡修正4: select{}をWaitGroupに変更
 
 	for _, sub := range mainApp.SubFramework {
 		if sub.ImportKey != "" {
@@ -162,9 +181,18 @@ func main() {
 				if dir != "." {
 					os.MkdirAll(dir, 0755)
 				}
-				
-				f, _ := os.OpenFile(engConfig.Src, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0644)
-				f.WriteString(strings.TrimSpace(node.Content))
+
+				// 🟢修正6: ファイル書き込みエラーを無視しない
+				f, err := os.OpenFile(engConfig.Src, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0644)
+				if err != nil {
+					log.Printf("[Error] Failed to open engine src file for <%s>: %v", tagName, err)
+					continue
+				}
+				if _, err := f.WriteString(strings.TrimSpace(node.Content)); err != nil {
+					log.Printf("[Error] Failed to write engine src for <%s>: %v", tagName, err)
+					f.Close()
+					continue
+				}
 				f.Close()
 
 				finalArgs := make([]string, len(langSet.Args))
@@ -172,15 +200,18 @@ func main() {
 					finalArgs[i] = strings.ReplaceAll(arg, "{src}", engConfig.Src)
 				}
 
-				// Non-blocking asynchronous execution with input stream boundary termination
-				go func() {
+				// 🟢修正5: クロージャ変数を引数として明示的にコピー
+				wg.Add(1)
+				go func(tag string, eng EngineSetting, ls RuntimeSetting, args []string) {
+					defer wg.Done()
+
 					var cmd *exec.Cmd
-					rawArgs := strings.Join(finalArgs, " ")
+					rawArgs := strings.Join(args, " ")
 
 					if os.PathSeparator == '\\' {
-						cmd = exec.Command("cmd", "/C", langSet.Command+" "+rawArgs)
+						cmd = exec.Command("cmd", "/C", ls.Command+" "+rawArgs)
 					} else {
-						cmd = exec.Command("sh", "-c", langSet.Command+" "+rawArgs)
+						cmd = exec.Command("sh", "-c", ls.Command+" "+rawArgs)
 					}
 
 					cmd.Stdout = os.Stdout
@@ -188,28 +219,34 @@ func main() {
 
 					stdinPipe, err := cmd.StdinPipe()
 					if err != nil {
-						log.Printf("[Error] Failed to create stdin pipe for <%s>: %v", tagName, err)
+						log.Printf("[Error] Failed to create stdin pipe for <%s>: %v", tag, err)
 						return
 					}
 
 					if err := cmd.Start(); err != nil {
-						log.Printf("[Error] Failed to start process for <%s>: %v", tagName, err)
+						log.Printf("[Error] Failed to start process for <%s>: %v", tag, err)
 						return
 					}
-					activeProcesses = append(activeProcesses, cmd.Process)
 
+					// 🔴修正1: Mutexでプロセスリストを保護
+					processMu.Lock()
+					activeProcesses = append(activeProcesses, cmd.Process)
+					processMu.Unlock()
+
+					// 🔴修正1: sharedStoreの読み取りも保護
+					storeMu.RLock()
 					packet := MemoryPacket{
 						MemoryName: memSpaceName,
 						Data:       sharedStore,
 					}
+					storeMu.RUnlock()
+
 					packetBytes, _ := json.Marshal(packet)
 					io.WriteString(stdinPipe, string(packetBytes)+"\n")
-					
-					// Close write pipeline explicitly to release subprocess scanner blocks
 					stdinPipe.Close()
 
 					cmd.Wait()
-				}()
+				}(tagName, engConfig, langSet, finalArgs)
 			}
 
 			if tagName == "xeh-logic" {
@@ -220,9 +257,11 @@ func main() {
 						if output == "" {
 							output = child.Content
 						}
+						storeMu.RLock()
 						for k, v := range sharedStore {
 							output = strings.ReplaceAll(output, "${"+k+"}", fmt.Sprintf("%v", v))
 						}
+						storeMu.RUnlock()
 						fmt.Printf("   [xeh Print]: %s\n", strings.TrimSpace(output))
 					}
 				}
@@ -230,7 +269,7 @@ func main() {
 		}
 	}
 
-	select {}
+	wg.Wait() // 🟡修正4: 全goroutine終了まで待つ
 }
 
 func loadXehFile(filePath string) XehApp {
@@ -240,9 +279,16 @@ func loadXehFile(filePath string) XehApp {
 		return XehApp{}
 	}
 	defer file.Close()
-	bytes, _ := io.ReadAll(file)
+	bytes, err := io.ReadAll(file)
+	if err != nil {
+		log.Printf("[Error] Failed to read plugin file content: %s, %v", filePath, err)
+		return XehApp{}
+	}
 	var app XehApp
-	xml.Unmarshal(bytes, &app)
+	if err := xml.Unmarshal(bytes, &app); err != nil {
+		log.Printf("[Error] Failed to parse plugin file: %s, %v", filePath, err)
+		return XehApp{}
+	}
 	return app
 }
 
@@ -253,23 +299,28 @@ func mergeRootVariables(jsonStr string) {
 	}
 	var tempVariables []XehVariable
 	if err := json.Unmarshal([]byte(jsonStr), &tempVariables); err == nil {
+		storeMu.Lock()
 		for _, v := range tempVariables {
 			sharedStore[v.Name] = v.Value
 		}
+		storeMu.Unlock()
 	}
 }
 
-func etupSignalHandler() {
+// 🔴修正2: タイポ修正（etup → setup）
+func setupSignalHandler() {
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
 	go func() {
 		<-c
 		fmt.Println("\n--- Terminating xeh engine. Cleaning up subprocesses. ---")
+		processMu.Lock()
 		for _, proc := range activeProcesses {
 			if proc != nil {
 				proc.Kill()
 			}
 		}
+		processMu.Unlock()
 		os.Exit(0)
 	}()
 }
