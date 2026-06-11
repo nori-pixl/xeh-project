@@ -1,0 +1,77 @@
+{
+  "meta": {
+    "name": "xeh-core-engine",
+    "version": "9.9.1",
+    "license": "MIT",
+    "charset": "UTF-8"
+  },
+  "runtimes": {
+    "py": {
+      "command": "python",
+      "args": ["-u", "{src}"]
+    },
+    "go": {
+      "command": "go",
+      "args": ["run", "{src}"]
+    },
+    "rb": {
+      "command": "ruby",
+      "args": ["{src}"]
+    },
+    "ts": {
+      "command": "ts-node",
+      "args": ["{src}"]
+    },
+    "rs": {
+      "command": "rustc",
+      "args": ["{src}", "-o", "rust_app", "&&", "./rust_app"]
+    },
+    "java": {
+      "command": "java",
+      "args": ["{src}"]
+    },
+    "cpp": {
+      "command": "g++",
+      "args": ["-std=c++17", "{src}", "-o", "cpp_app", "&&", "./cpp_app"]
+    },
+    "php": {
+      "command": "php",
+      "args": ["{src}"]
+    },
+    "cs": {
+      "command": "dotnet",
+      "args": ["script", "{src}"]
+    },
+    "ex": {
+      "command": "elixir",
+      "args": ["{src}"]
+    }
+  },
+  "engines": {
+    "ai-logic": {
+      "type": "py",
+      "src": "plugins/ai_core.py"
+    },
+    "fast-api": {
+      "type": "go",
+      "src": "plugins/api_handler.go"
+    },
+    "heavy-calc": {
+      "type": "rs",
+      "src": "plugins/calc_core.rs"
+    },
+    "legacy-service": {
+      "type": "java",
+      "src": "plugins/LegacyService.java"
+    },
+    "web-template": {
+      "type": "php",
+      "src": "plugins/index.php"
+    }
+  },
+  "plugins": {
+    "ai-mod": {
+      "src": "plugins/ai_plugin.xeh"
+    }
+  }
+}
