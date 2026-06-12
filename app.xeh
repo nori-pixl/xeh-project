@@ -21,9 +21,32 @@
         ]
     </root>
 
+    <server id="main" port="8080"><![CDATA[
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8" />
+    <title>xeh HTTP Server</title>
+</head>
+<body>
+    <h1>xeh Server Form</h1>
+    <p>Send data to the xeh engine and view current memory values.</p>
+    <form action="/submit" method="post">
+        <label for="user">User:</label>
+        <input type="text" id="user" name="user" value="guest" />
+        <br />
+        <label for="message">Message:</label>
+        <input type="text" id="message" name="message" value="hello" />
+        <br />
+        <button type="submit">Submit</button>
+    </form>
+</body>
+</html>
+]]></server>
+
     <subframework roteapp="/sub">
         <!-- Executing unified python script via custom tag mapped in set.json -->
-        <ai-logic>
+        <ai-logic><![CDATA[
 import sys
 import json
 
@@ -33,17 +56,17 @@ print("[Python] Pipe memory stream listener activated.")
 for line in sys.stdin:
     try:
         packet = json.loads(line.strip())
-        
+
         space_name = packet.get("memory_name")
         memory_data = packet.get("data")
-        
+
         print(f"[Python] Target Memory Space: '{space_name}'")
         print(f"Value of test1: {memory_data.get('test1')}")
         print(f"Value of counter: {memory_data.get('counter')}")
     except Exception as e:
         print(f"[Python Error]: {e}")
         break
-        </ai-logic>
+        ]]></ai-logic>
 
         <!-- Executing native xeh XML logic directly on Go engine -->
         <xeh-logic>

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"net/http"
 	"os"
 	"os/exec"
 	"os/signal"
@@ -28,11 +29,22 @@ type SubFramework struct {
 	Nodes     []XehNode `xml:",any"`
 }
 
+type XehRoot struct {
+	MemoryName string `xml:"memory_name,attr"`
+	Content    string `xml:",chardata"`
+}
+
+type XehServer struct {
+	ID       string `xml:"id,attr"`
+	Port     string `xml:"port,attr"`
+	InnerXML string `xml:",innerxml"`
+}
+
 type XehApp struct {
-	XMLName       xml.Name       `xml:"xeh"`
-	MemoryName    string         `xml:"root>memory_name,attr"`
-	RootVariables string         `xml:"root"`
-	SubFramework  []SubFramework `xml:"subframework"`
+	XMLName      xml.Name       `xml:"xeh"`
+	Root         XehRoot        `xml:"root"`
+	Servers      []XehServer    `xml:"server"`
+	SubFramework []SubFramework `xml:"subframework"`
 }
 
 type XehVariable struct {
@@ -78,8 +90,11 @@ var (
 	activeProcesses []*os.Process
 	processMu       sync.Mutex // 🔴修正1: Race Condition対策
 
-	sharedStore   = make(map[string]interface{})
-	storeMu       sync.RWMutex // 🔴修正1: sharedStoreの競合対策
+	sharedStore = make(map[string]interface{})
+	storeMu     sync.RWMutex // 🔴修正1: sharedStoreの競合対策
+
+	httpServers []*http.Server
+	serverMu    sync.Mutex
 
 	dynamicEngineMap = make(map[string]EngineSetting)
 )
@@ -123,20 +138,21 @@ func main() {
 	}
 	xmlBytes, err := io.ReadAll(file)
 	if err != nil {
-		log.Fatalf("[Error] Failed to read app.xeh: %v", err) // 🟡修正3: エラー無視をなくす
+		log.Fatalf("[Error] Failed to read app.xeh: %v", err)
 	}
+
 	var mainApp XehApp
-	if err := xml.Unmarshal(xmlBytes, &mainApp); err != nil { // 🟡修正3: エラー無視をなくす
+	if err := xml.Unmarshal(xmlBytes, &mainApp); err != nil {
 		log.Fatalf("[Error] Failed to parse app.xeh: %v", err)
 	}
 	file.Close()
 
-	memSpaceName := mainApp.MemoryName
+	memSpaceName := mainApp.Root.MemoryName
 	if memSpaceName == "" {
 		memSpaceName = "default_space"
 	}
 
-	rootJSON := strings.TrimSpace(mainApp.RootVariables)
+	rootJSON := strings.TrimSpace(mainApp.Root.Content)
 	if rootJSON != "" {
 		var rawVariables []XehVariable
 		if err := json.Unmarshal([]byte(rootJSON), &rawVariables); err != nil {
@@ -154,6 +170,10 @@ func main() {
 
 	setupSignalHandler() // 🔴修正2: タイポ修正
 
+	for _, srv := range mainApp.Servers {
+		startHTTPServer(srv)
+	}
+
 	var wg sync.WaitGroup // 🟡修正4: select{}をWaitGroupに変更
 
 	for _, sub := range mainApp.SubFramework {
@@ -163,7 +183,7 @@ func main() {
 				log.Printf("[Warning] Plugin key '%s' is not defined in set.json.", sub.ImportKey)
 			} else {
 				importedApp := loadXehFile(pluginConfig.Src)
-				mergeRootVariables(importedApp.RootVariables)
+				mergeRootVariables(importedApp.Root.Content)
 			}
 		}
 
@@ -270,6 +290,64 @@ func main() {
 	}
 
 	wg.Wait() // 🟡修正4: 全goroutine終了まで待つ
+
+	if len(httpServers) > 0 {
+		select {}
+	}
+}
+
+func startHTTPServer(serverConfig XehServer) {
+	port := strings.TrimSpace(serverConfig.Port)
+	if port == "" {
+		port = "8080"
+	}
+
+	pageHTML := strings.TrimSpace(serverConfig.InnerXML)
+	mux := http.NewServeMux()
+
+	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "text/html; charset=utf-8")
+		if pageHTML == "" {
+			pageHTML = "<!DOCTYPE html><html><body><h1>Welcome to xeh server</h1></body></html>"
+		}
+		_, _ = w.Write([]byte(pageHTML))
+	})
+
+	mux.HandleFunc("/submit", func(w http.ResponseWriter, r *http.Request) {
+		if err := r.ParseForm(); err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			_, _ = w.Write([]byte("Failed to parse form data."))
+			return
+		}
+
+		w.Header().Set("Content-Type", "text/html; charset=utf-8")
+		_, _ = w.Write([]byte("<!DOCTYPE html><html><body><h1>Form Submission</h1>"))
+		_, _ = w.Write([]byte("<p>Received form values:</p><ul>"))
+		for key, values := range r.Form {
+			_, _ = w.Write([]byte(fmt.Sprintf("<li><strong>%s</strong>: %s</li>", key, strings.Join(values, ", "))))
+		}
+
+		storeMu.RLock()
+		_, _ = w.Write([]byte("</ul><h2>Current Memory Values</h2><ul>"))
+		for key, value := range sharedStore {
+			_, _ = w.Write([]byte(fmt.Sprintf("<li><strong>%s</strong>: %v</li>", key, value)))
+		}
+		storeMu.RUnlock()
+		_, _ = w.Write([]byte("</ul><p><a href=\"/\">Back to form</a></p></body></html>"))
+	})
+
+	srv := &http.Server{Addr: ":" + port, Handler: mux}
+
+	serverMu.Lock()
+	httpServers = append(httpServers, srv)
+	serverMu.Unlock()
+
+	go func() {
+		log.Printf("[xeh/os] HTTP server '%s' listening on %s", serverConfig.ID, srv.Addr)
+		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			log.Printf("[Error] HTTP server '%s' failed: %v", serverConfig.ID, err)
+		}
+	}()
 }
 
 func loadXehFile(filePath string) XehApp {
