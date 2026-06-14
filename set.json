@@ -5,6 +5,14 @@
     "license": "MIT",
     "charset": "UTF-8"
   },
+  "handlers": {
+    "xeh-logic": "core.logic",
+    "ai-logic": "core.engine",
+    "fast-api": "core.engine",
+    "heavy-calc": "core.engine",
+    "legacy-service": "core.engine",
+    "web-template": "core.engine"
+  },
   "runtimes": {
     "py": {
       "command": "python",
