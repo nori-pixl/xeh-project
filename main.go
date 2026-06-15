@@ -75,6 +75,19 @@ func handleCLIFlags(cfg *core.SetConfig) bool {
 	case "--license":
 		fmt.Printf("%s is licensed under the %s License.\n", cfg.Meta.Name, cfg.Meta.License)
 		return true
+	case "--help", "--h":
+		fmt.Printf("--version, --v\n")
+		fmt.Printf("--license\n")
+		fmt.Printf("--help, --h\n")
+		fmt.Printf("--mail\n")
+		fmt.Printf("--config\n")
+		return true
+	case "--mail":
+		fmt.Printf("gmail: sato.shigure4@gmail.com")
+		return true
+	case "--config":
+		fmt.Printf("set.json")
+		return true
 	}
 
 	return false
