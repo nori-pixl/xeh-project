@@ -6,6 +6,7 @@ import (
 	"os/signal"
 	"sync"
 	"syscall"
+	"strings"
 
 	"xeh/internal/core"
 	"xeh/internal/handlers"
@@ -68,17 +69,17 @@ func handleCLIFlags(cfg *core.SetConfig) bool {
 		return false
 	}
 
-	switch os.Args[1] {
+	switch strings.ToLower(os.Args[1]) {
 	case "--version", "-v":
 		fmt.Printf("%s version %s\n", cfg.Meta.Name, cfg.Meta.Version)
 		return true
 	case "--license":
 		fmt.Printf("%s is licensed under the %s License.\n", cfg.Meta.Name, cfg.Meta.License)
 		return true
-	case "--help", "--h":
+	case "--help", "-h":
 		fmt.Printf("--version, --v\n")
 		fmt.Printf("--license\n")
-		fmt.Printf("--help, --h\n")
+		fmt.Printf("--help, -h\n")
 		fmt.Printf("--mail\n")
 		fmt.Printf("--config\n")
 		return true
@@ -88,6 +89,11 @@ func handleCLIFlags(cfg *core.SetConfig) bool {
 	case "--config":
 		fmt.Printf("set.json")
 		return true
+	    // switchの最後に追加する
+    default:
+        fmt.Printf("No command available.": %s\n", os.Args[1])
+        fmt.Println("To check how to use it, run -help.")
+        return true
 	}
 
 	return false
