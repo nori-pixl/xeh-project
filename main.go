@@ -91,7 +91,7 @@ func handleCLIFlags(cfg *core.SetConfig) bool {
 		return true
 	    // switchの最後に追加する
     default:
-        fmt.Printf("No command available.": %s\n", os.Args[1])
+        fmt.Printf("No command available.: %s\n", os.Args[1])
         fmt.Println("To check how to use it, run -help.")
         return true
 	}
