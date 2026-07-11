@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
+	"strings"
 	"sync"
 	"syscall"
-	"strings"
 
 	"xeh/internal/core"
 	"xeh/internal/handlers"
@@ -89,14 +89,13 @@ func handleCLIFlags(cfg *core.SetConfig) bool {
 	case "--config":
 		fmt.Printf("set.json")
 		return true
-	    // switchの最後に追加する
-    default:
-        fmt.Printf("No command available.: %s\n", os.Args[1])
-        fmt.Println("To check how to use it, run -help.")
-        return true
+		// switchの最後に追加する
+	default:
+		fmt.Printf("No command available.: %s\n", os.Args[1])
+		fmt.Println("To check how to use it, run -help.")
+		return true
 	}
 
-	return false
 }
 
 // setupSignalHandler はCtrl+C等のシグナルを受け取り、起動済みの全子プロセスを

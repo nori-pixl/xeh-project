@@ -11,7 +11,7 @@
             {
                 "name": "test1",
                 "type": "string",
-                "value": "test1aaaaa"
+                "value": "test1"
             },
             {
                 "name": "counter",
