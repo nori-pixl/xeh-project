@@ -96,17 +96,7 @@ func handleCLIArgs(cfg *core.SetConfig) (string, bool) {
 	case "--config":
 		fmt.Printf("set.json")
 		return "", true
-	case "--なんちゃって":
-		fmt.Printf("%s version %s\n", cfg.Meta.Name, cfg.Meta.Version)
-		fmt.Printf("--- %s (Version %s / %s License / %s) ---\n",
-			cfg.Meta.Name, cfg.Meta.Version, cfg.Meta.License, cfg.Meta.Charset)
-		fmt.Printf("--version, --v\n")
-		fmt.Printf("--license\n")
-		fmt.Printf("--help, -h\n")
-		fmt.Printf("--mail\n")
-		fmt.Printf("--config\n")
-		fmt.Printf("(--version, --help をなんちゃって合体させただけです)\n")
-		return "", true
+	
 	case "run":
 		return handleRunCommand()
 	case "new":
