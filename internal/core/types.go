@@ -61,6 +61,7 @@ type MetaSetting struct {
 	Version string `json:"version"`
 	License string `json:"license"`
 	Charset string `json:"charset"`
+	Mail    string `json:"mail"`
 }
 
 // RuntimeSetting は外部言語を実行するコマンド定義 (例: python, node)
