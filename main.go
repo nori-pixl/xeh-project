@@ -91,12 +91,22 @@ func handleCLIArgs(cfg *core.SetConfig) (string, bool) {
 		fmt.Printf("new xehfile <ファイル名>\n")
 		return "", true
 	case "--mail":
-		fmt.Printf("gmail: sato.shigure4@gmail.com")
+		fmt.Printf("mail: %s", cfg.Meta.Mail)
 		return "", true
 	case "--config":
 		fmt.Printf("set.json")
 		return "", true
-	
+	case "--なんちゃって":
+		fmt.Printf("%s version %s\n", cfg.Meta.Name, cfg.Meta.Version)
+		fmt.Printf("--- %s (Version %s / %s License / %s) ---\n",
+			cfg.Meta.Name, cfg.Meta.Version, cfg.Meta.License, cfg.Meta.Charset)
+		fmt.Printf("--version, --v\n")
+		fmt.Printf("--license\n")
+		fmt.Printf("--help, -h\n")
+		fmt.Printf("--mail\n")
+		fmt.Printf("--config\n")
+		fmt.Printf("(--version, --help をなんちゃって合体させただけです)\n")
+		return "", true
 	case "run":
 		return handleRunCommand()
 	case "new":
@@ -250,7 +260,8 @@ func defaultSetJSON(name string) string {
     "name": "%s",
     "version": "0.1.0",
     "license": "MIT",
-    "charset": "UTF-8"
+    "charset": "UTF-8",
+    "mail": ""
   },
   "handlers": {
     "xeh-logic": "core.logic"
