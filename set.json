@@ -3,7 +3,8 @@
     "name": "xeh-core-engine",
     "version": "1.0.9",
     "license": "MIT",
-    "charset": "UTF-8"
+    "charset": "UTF-8",
+    "mail": "sato.shigure4@gmail.com"
   },
   "handlers": {
     "xeh-logic": "core.logic",
